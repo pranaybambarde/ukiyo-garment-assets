@@ -1,0 +1,335 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Lambda functions for Ukiyo e-commerce backend'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [development, staging, production]
+    Description: Environment name
+  
+  JWTSecret:
+    Type: String
+    NoEcho: true
+    Description: JWT secret for token signing
+  
+  GoogleClientId:
+    Type: String
+    Description: Google OAuth client ID
+  
+  AppleClientId:
+    Type: String
+    Description: Apple Sign-In client ID
+  
+  FrontendUrl:
+    Type: String
+    Default: https://ukiyo.com
+    Description: Frontend URL for CORS and redirects
+
+Resources:
+  # IAM Role for Lambda functions
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ukiyo-*'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/ukiyo-*/index/*'
+        - PolicyName: SESAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: '*'
+
+  # Google Auth Lambda
+  GoogleAuthLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-google-auth
+      Runtime: python3.9
+      Handler: google_auth.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Google Auth Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          GOOGLE_CLIENT_ID: !Ref GoogleClientId
+          ENVIRONMENT: !Ref Environment
+          USERS_TABLE: ukiyo-users
+          USER_AUTH_TABLE: ukiyo-user-auth
+      Timeout: 30
+      MemorySize: 256
+
+  # Phone Auth Lambda
+  PhoneAuthLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-phone-auth
+      Runtime: python3.9
+      Handler: phone_auth.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Phone Auth Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          USERS_TABLE: ukiyo-users
+          USER_AUTH_TABLE: ukiyo-user-auth
+          OTP_SESSIONS_TABLE: ukiyo-otp-sessions
+      Timeout: 30
+      MemorySize: 256
+
+  # Email Auth Lambda
+  EmailAuthLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-email-auth
+      Runtime: python3.9
+      Handler: email_auth.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Email Auth Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          FRONTEND_URL: !Ref FrontendUrl
+          USERS_TABLE: ukiyo-users
+          USER_AUTH_TABLE: ukiyo-user-auth
+          MAGIC_LINK_SESSIONS_TABLE: ukiyo-magic-link-sessions
+      Timeout: 30
+      MemorySize: 256
+
+  # Products Lambda
+  ProductsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-products
+      Runtime: python3.9
+      Handler: products.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Products Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          PRODUCTS_TABLE: ukiyo-products
+      Timeout: 30
+      MemorySize: 512
+
+  # Cart Lambda
+  CartLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-cart
+      Runtime: python3.9
+      Handler: cart.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Cart Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          CART_TABLE: ukiyo-cart
+          PRODUCTS_TABLE: ukiyo-products
+      Timeout: 30
+      MemorySize: 256
+
+  # Wishlist Lambda
+  WishlistLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-wishlist
+      Runtime: python3.9
+      Handler: wishlist.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Wishlist Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          WISHLIST_TABLE: ukiyo-wishlist
+          PRODUCTS_TABLE: ukiyo-products
+      Timeout: 30
+      MemorySize: 256
+
+  # Checkout Lambda
+  CheckoutLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-checkout
+      Runtime: python3.9
+      Handler: checkout.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Checkout Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          CART_TABLE: ukiyo-cart
+          ORDERS_TABLE: ukiyo-orders
+          PRODUCTS_TABLE: ukiyo-products
+      Timeout: 60
+      MemorySize: 512
+
+  # Admin Inventory Lambda
+  AdminInventoryLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-admin-inventory
+      Runtime: python3.9
+      Handler: inventory.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Admin Inventory Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          PRODUCTS_TABLE: ukiyo-products
+      Timeout: 30
+      MemorySize: 512
+
+  # Admin Analytics Lambda
+  AdminAnalyticsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-admin-analytics
+      Runtime: python3.9
+      Handler: analytics.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Admin Analytics Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          ORDERS_TABLE: ukiyo-orders
+          USERS_TABLE: ukiyo-users
+          ANALYTICS_TABLE: ukiyo-analytics
+      Timeout: 60
+      MemorySize: 512
+
+  # Admin Returns Lambda
+  AdminReturnsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-admin-returns
+      Runtime: python3.9
+      Handler: returns.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Admin Returns Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          RETURNS_TABLE: ukiyo-returns
+          ORDERS_TABLE: ukiyo-orders
+          USERS_TABLE: ukiyo-users
+      Timeout: 30
+      MemorySize: 256
+
+  # User Profile Lambda
+  UserProfileLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ukiyo-user-profile
+      Runtime: python3.9
+      Handler: profile.lambda_handler
+      Code:
+        ZipFile: |
+          # Placeholder - will be replaced with actual code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'User Profile Lambda'}
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+          ENVIRONMENT: !Ref Environment
+          USERS_TABLE: ukiyo-users
+          PRODUCTS_TABLE: ukiyo-products
+          ORDERS_TABLE: ukiyo-orders
+          USER_ADDRESSES_TABLE: ukiyo-user-addresses
+          USER_PREFERENCES_TABLE: ukiyo-user-preferences
+      Timeout: 30
+      MemorySize: 256
+
+Outputs:
+  GoogleAuthLambdaArn:
+    Description: ARN of the Google Auth Lambda function
+    Value: !GetAtt GoogleAuthLambda.Arn
+    Export:
+      Name: Ukiyo-GoogleAuthLambda
+
+  ProductsLambdaArn:
+    Description: ARN of the Products Lambda function
+    Value: !GetAtt ProductsLambda.Arn
+    Export:
+      Name: Ukiyo-ProductsLambda
+
+  CheckoutLambdaArn:
+    Description: ARN of the Checkout Lambda function
+    Value: !GetAtt CheckoutLambda.Arn
+    Export:
+      Name: Ukiyo-CheckoutLambda

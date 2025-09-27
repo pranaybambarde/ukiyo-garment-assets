@@ -1,0 +1,345 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'API Gateway for Ukiyo e-commerce backend'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [development, staging, production]
+    Description: Environment name
+
+Resources:
+  # API Gateway
+  UkiyoAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub 'ukiyo-api-${Environment}'
+      Description: Ukiyo E-commerce API
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Policy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: execute-api:Invoke
+            Resource: '*'
+
+  # API Gateway Deployment
+  UkiyoAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - AuthResource
+      - ProductsResource
+      - CartResource
+      - WishlistResource
+      - CheckoutResource
+      - AdminResource
+      - UserResource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      StageName: !Ref Environment
+
+  # CORS Options Method
+  OptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref UkiyoAPI
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Auth Resource
+  AuthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !GetAtt UkiyoAPI.RootResourceId
+      PathPart: auth
+
+  # Google Auth Resource
+  GoogleAuthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !Ref AuthResource
+      PathPart: google
+
+  # Google Auth Methods
+  GoogleAuthPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref GoogleAuthResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GoogleAuthLambda}/invocations'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Phone Auth Resource
+  PhoneAuthResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !Ref AuthResource
+      PathPart: phone
+
+  # Phone Auth Methods
+  PhoneAuthSendOTPMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref PhoneAuthResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PhoneAuthLambda}/invocations'
+
+  # Products Resource
+  ProductsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !GetAtt UkiyoAPI.RootResourceId
+      PathPart: products
+
+  # Products Methods
+  ProductsGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref ProductsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProductsLambda}/invocations'
+
+  # Cart Resource
+  CartResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !GetAtt UkiyoAPI.RootResourceId
+      PathPart: cart
+
+  # Cart Methods
+  CartGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref CartResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CartLambda}/invocations'
+
+  CartPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref CartResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CartLambda}/invocations'
+
+  # Wishlist Resource
+  WishlistResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !GetAtt UkiyoAPI.RootResourceId
+      PathPart: wishlist
+
+  # Wishlist Methods
+  WishlistGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref WishlistResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WishlistLambda}/invocations'
+
+  # Checkout Resource
+  CheckoutResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !GetAtt UkiyoAPI.RootResourceId
+      PathPart: checkout
+
+  # Checkout Methods
+  CheckoutPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref CheckoutResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CheckoutLambda}/invocations'
+
+  # Admin Resource
+  AdminResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !GetAtt UkiyoAPI.RootResourceId
+      PathPart: admin
+
+  # Admin Products Resource
+  AdminProductsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !Ref AdminResource
+      PathPart: products
+
+  # Admin Products Methods
+  AdminProductsGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref AdminProductsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AdminInventoryLambda}/invocations'
+
+  # User Resource
+  UserResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !GetAtt UkiyoAPI.RootResourceId
+      PathPart: user
+
+  # User Profile Resource
+  UserProfileResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ParentId: !Ref UserResource
+      PathPart: profile
+
+  # User Profile Methods
+  UserProfileGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref UkiyoAPI
+      ResourceId: !Ref UserProfileResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserProfileLambda}/invocations'
+
+  # Lambda Permissions
+  GoogleAuthLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GoogleAuthLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UkiyoAPI}/*/*'
+
+  ProductsLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProductsLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UkiyoAPI}/*/*'
+
+  CartLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CartLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UkiyoAPI}/*/*'
+
+  WishlistLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WishlistLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UkiyoAPI}/*/*'
+
+  CheckoutLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CheckoutLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UkiyoAPI}/*/*'
+
+  AdminInventoryLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AdminInventoryLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UkiyoAPI}/*/*'
+
+  UserProfileLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UserProfileLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${UkiyoAPI}/*/*'
+
+Outputs:
+  APIEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${UkiyoAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: Ukiyo-APIEndpoint
+
+  APIGatewayId:
+    Description: API Gateway ID
+    Value: !Ref UkiyoAPI
+    Export:
+      Name: Ukiyo-APIGatewayId
