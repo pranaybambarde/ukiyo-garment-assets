@@ -578,10 +578,36 @@ xl: 1280px  /* Desktops */
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
+- **Node.js 18+** 
+- **npm or yarn**
+- **Backend server** (see Backend Setup below)
 
-### Installation
+### Quick Start (Full Stack)
+
+To run both frontend and backend together:
+
+1. **Start the Backend Server:**
+   ```bash
+   cd ../backend
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   pip install uvicorn
+   python3 local_server.py
+   ```
+   Backend will be available at: http://localhost:8000
+
+2. **Start the Frontend Server:**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Frontend will be available at: http://localhost:3000
+
+### Frontend-Only Setup
+
+If you only want to run the frontend with mock data:
 
 1. **Clone the repository**
    ```bash
@@ -596,17 +622,16 @@ xl: 1280px  /* Desktops */
 
 3. **Set up environment variables**
    ```bash
-   cp .env.example .env.local
-   ```
-   
-   Update the environment variables:
-   ```env
+   # Create .env.local file
+   cat > .env.local << 'EOF'
    NEXTAUTH_URL=http://localhost:3000
-   NEXTAUTH_SECRET=your-secret-key
+   NEXTAUTH_SECRET=ukiyo-nextauth-secret-key-2024
    GOOGLE_CLIENT_ID=your-google-client-id
    GOOGLE_CLIENT_SECRET=your-google-client-secret
    APPLE_CLIENT_ID=your-apple-client-id
    APPLE_CLIENT_SECRET=your-apple-client-secret
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   EOF
    ```
 
 4. **Run the development server**
@@ -616,6 +641,27 @@ xl: 1280px  /* Desktops */
 
 5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Backend Integration
+
+The frontend is configured to work with the backend API:
+
+- **API Base URL**: `http://localhost:8000` (configurable via `NEXT_PUBLIC_API_URL`)
+- **CORS**: Backend configured for frontend domain
+- **Mock Data**: Frontend includes mock API routes for development
+- **Real API**: Switch to backend by updating API calls
+
+### Environment Variables
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `NEXTAUTH_URL` | Frontend URL for NextAuth | `http://localhost:3000` |
+| `NEXTAUTH_SECRET` | NextAuth secret key | `ukiyo-nextauth-secret-key-2024` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | `your-google-client-id` |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | `your-google-client-secret` |
+| `APPLE_CLIENT_ID` | Apple Sign-In client ID | `your-apple-client-id` |
+| `APPLE_CLIENT_SECRET` | Apple Sign-In client secret | `your-apple-client-secret` |
+| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8000` |
 
 ## 🧪 Testing Strategy
 
@@ -828,12 +874,41 @@ The implementation successfully delivers on the functional-luxury design philoso
 
 **Ready for production deployment and further feature development!** 🚀
 
+## 🚀 Current Development Status
+
+### ✅ Working Features
+- **Landing Page**: Complete with hero, new arrivals, value props, and collections
+- **Product Catalog**: Advanced filtering, search, and sorting
+- **Shopping Cart**: Guest and authenticated user support
+- **Authentication UI**: Login/signup forms with OAuth and OTP
+- **Responsive Design**: Mobile-first approach with desktop enhancements
+- **API Integration**: Mock data and backend communication ready
+- **Performance**: Optimized with Next.js Image, code splitting, and caching
+
+### ⚠️ Known Issues
+- **Missing Images**: Some product and collection images return 404 (expected in development)
+- **Backend Integration**: Currently using mock data; real backend integration in progress
+- **Authentication**: OAuth providers need real credentials for full functionality
+- **Payment Integration**: Checkout flow needs payment gateway integration
+
+### 🔧 Development Notes
+- **Image Placeholders**: Using placeholder images for missing assets
+- **Mock Data**: Realistic product data for development and testing
+- **CORS Configuration**: Backend configured for frontend development
+- **Hot Reload**: Both frontend and backend support hot reloading
+
 ## 📋 Quick Start
 
+### Full Stack Development
+1. **Start Backend**: `cd ../backend && python3 local_server.py`
+2. **Start Frontend**: `cd frontend && npm run dev`
+3. **Access Application**: http://localhost:3000
+4. **API Documentation**: http://localhost:8000/docs
+
+### Frontend Only
 1. **Install dependencies**: `npm install`
 2. **Start development**: `npm run dev`
-3. **Build for production**: `npm run build`
-4. **View application**: `http://localhost:3000`
+3. **View application**: `http://localhost:3000`
 
 ## 🔗 Related Documentation
 

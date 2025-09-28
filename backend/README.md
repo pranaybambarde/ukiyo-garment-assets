@@ -272,21 +272,130 @@ Each Lambda function uses the following environment variables:
 
 ### Local Development
 
-1. Install dependencies:
+The backend can be run locally for development using a FastAPI development server. This allows you to test the API endpoints without deploying to AWS Lambda.
+
+#### Prerequisites
+
+1. **Python 3.9+** installed
+2. **Virtual Environment** (recommended)
+
+#### Setup Instructions
+
+1. **Create and activate virtual environment:**
+   ```bash
+   cd backend
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
+   pip install uvicorn  # For local development server
    ```
 
-2. Set up local DynamoDB (optional):
+3. **Set environment variables:**
    ```bash
-   # Install DynamoDB Local
-   # Configure AWS CLI to use local DynamoDB
+   export JWT_SECRET="ukiyo-jwt-secret-key-2024"
+   export GOOGLE_CLIENT_ID="your-google-client-id"
+   export APPLE_CLIENT_ID="your-apple-client-id"
+   export FRONTEND_URL="http://localhost:3000"
+   export ENVIRONMENT="development"
+   export AWS_REGION="us-east-1"
    ```
 
-3. Run tests:
+4. **Run the local development server:**
    ```bash
-   python -m pytest tests/
+   python3 local_server.py
    ```
+
+5. **Access the API:**
+   - **API Base URL**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+   - **Health Check**: http://localhost:8000/health
+
+#### Local Development Features
+
+- **Hot Reload**: Server automatically restarts when code changes
+- **API Documentation**: Interactive Swagger UI at `/docs`
+- **CORS Enabled**: Configured for frontend development
+- **All Lambda Functions**: Mounted as sub-applications
+- **Mock Data**: Returns placeholder responses when DynamoDB is not available
+
+#### Testing the Backend
+
+1. **Run backend tests:**
+   ```bash
+   source venv/bin/activate
+   PYTHONPATH=/path/to/backend python3 test_backend.py
+   ```
+
+2. **Test API endpoints:**
+   ```bash
+   # Health check
+   curl http://localhost:8000/health
+   
+   # Products endpoint
+   curl http://localhost:8000/api/products/products
+   
+   # API documentation
+   open http://localhost:8000/docs
+   ```
+
+#### Project Structure Updates
+
+The local development setup includes:
+
+```
+backend/
+├── local_server.py          # Local development server
+├── venv/                    # Virtual environment (created during setup)
+├── requirements.txt         # Updated with Python 3.13+ compatibility
+└── ... (existing structure)
+```
+
+#### Environment Variables for Local Development
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `JWT_SECRET` | JWT signing secret | `ukiyo-jwt-secret-key-2024` |
+| `ENVIRONMENT` | Environment name | `development` |
+| `AWS_REGION` | AWS region | `us-east-1` |
+| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:3000` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | `your-google-client-id` |
+| `APPLE_CLIENT_ID` | Apple Sign-In client ID | `your-apple-client-id` |
+
+#### Troubleshooting Local Development
+
+1. **Port already in use:**
+   ```bash
+   # Kill existing process
+   pkill -f "python3 local_server.py"
+   # Or use a different port
+   uvicorn local_server:app --port 8001
+   ```
+
+2. **Import errors:**
+   ```bash
+   # Ensure virtual environment is activated
+   source venv/bin/activate
+   # Check Python path
+   export PYTHONPATH=/path/to/backend
+   ```
+
+3. **DynamoDB connection errors:**
+   - Expected in local development without AWS credentials
+   - API will return mock responses or error messages
+   - For full functionality, configure AWS credentials
+
+#### Integration with Frontend
+
+The local backend is configured to work with the frontend development server:
+
+- **CORS**: Configured for `http://localhost:3000`
+- **API Base URL**: `http://localhost:8000`
+- **Health Check**: Available at `/health`
+- **All Endpoints**: Prefixed with `/api/`
 
 ### Adding New Features
 
@@ -298,7 +407,40 @@ Each Lambda function uses the following environment variables:
 
 ## Troubleshooting
 
-### Common Issues
+### Local Development Issues
+
+1. **Port already in use:**
+   ```bash
+   # Kill existing process
+   pkill -f "python3 local_server.py"
+   # Or use a different port
+   uvicorn local_server:app --port 8001
+   ```
+
+2. **Import errors:**
+   ```bash
+   # Ensure virtual environment is activated
+   source venv/bin/activate
+   # Check Python path
+   export PYTHONPATH=/path/to/backend
+   ```
+
+3. **DynamoDB connection errors:**
+   - Expected in local development without AWS credentials
+   - API will return mock responses or error messages
+   - For full functionality, configure AWS credentials
+
+4. **Python version compatibility:**
+   - Ensure Python 3.9+ is installed
+   - Use virtual environment to avoid conflicts
+   - Update requirements.txt for newer Python versions
+
+5. **CORS issues:**
+   - Check if frontend URL is correctly configured
+   - Verify CORS middleware settings
+   - Test with curl or Postman
+
+### Production Issues
 
 1. **Lambda function timeout:**
    - Increase timeout in CloudFormation template
@@ -318,10 +460,16 @@ Each Lambda function uses the following environment variables:
 
 ### Debugging
 
-1. Check CloudWatch logs for Lambda functions
-2. Monitor API Gateway logs
-3. Use AWS X-Ray for distributed tracing
-4. Check DynamoDB metrics
+1. **Local Development:**
+   - Check server logs in terminal
+   - Use API documentation at `/docs`
+   - Test endpoints with curl or Postman
+
+2. **Production:**
+   - Check CloudWatch logs for Lambda functions
+   - Monitor API Gateway logs
+   - Use AWS X-Ray for distributed tracing
+   - Check DynamoDB metrics
 
 ## Support
 
